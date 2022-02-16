@@ -89,7 +89,7 @@
                       <span>Delete</span>
                     </div>
 
-                    <div @click="editReply(reply.content)">
+                    <div @click="editReply(reply.id)">
                       <i class="fa-solid fa-pen p-mr-2"></i>
                       <span>Edit</span>
                     </div>
@@ -100,27 +100,22 @@
                   </h4>
                 </div>
               </template>
-              <template v-if="reply.user.username === 'juliusomo'" #content>
-                <div v-if="isEditing">
-                  <span class="md-blue">{{ "@" + reply.replyingTo }}</span>
-                  {{ reply.content }}
-                  <Textarea
-                    v-model="editedText"
-                    class="p-mx-auto"
-                    :autoResize="true"
-                    rows="3"
-                    cols="64"
-                    placeholder="Add a comment..."
-                  />
-                </div>
-                <div v-else>
-                  <span class="md-blue">{{ "@" + reply.replyingTo }}</span>
-                  {{ reply.content }}
-                </div>
-              </template>
-              <template v-else #content>
-                <span class="md-blue">{{ "@" + reply.replyingTo }}</span>
-                {{ reply.content }}
+
+              <template #content>
+                <Textarea
+                  :id="reply.id"
+                  disabled
+                  :value="'@' + reply.replyingTo + reply.content"
+                  class="p-mx-auto remove-disabled-effects"
+                  :autoResize="true"
+                  rows="3"
+                  cols="64"
+                />
+                <Button
+                  v-if="isEditing && reply.user.username == 'juliusomo'"
+                  label="UPDATE"
+                  @click="updateReply(comment.id, reply.id)"
+                />
               </template>
             </Card>
           </div>
@@ -192,7 +187,7 @@ export default {
     return {
       replyText: null,
       commentText: null,
-      isEditing: false,
+      isEditing: true,
       editedText: "",
     };
   },
@@ -205,6 +200,27 @@ export default {
     },
   },
   methods: {
+    editedReply() {},
+    editReply(id) {
+      const textArea = document.getElementById(id);
+      textArea.removeAttribute("disabled");
+      textArea.focus();
+      this.isEditing = true;
+    },
+
+    updateReply(commentId, replyId) {
+      data.comments.forEach((comment) => {
+        if (comment.id == commentId) {
+          comment.replies.forEach((reply) => {
+            if (reply.id == replyId) {
+              const textArea = document.getElementById(replyId);
+              textArea.setAttribute("disabled", "");
+              this.isEditing = false;
+            }
+          });
+        }
+      });
+    },
     reply(id) {
       data.comments.forEach((comment) => {
         if (comment.id == id) {
@@ -255,21 +271,21 @@ export default {
       });
       this.$forceUpdate();
     },
-    editReply(replyContent) {
-      this.editedText = replyContent;
-      this.isEditing = !this.isEditing;
-    },
   },
 };
 </script>
 
 <style>
+.remove-disabled-effects {
+  opacity: 1 !important;
+  border: none;
+}
 .bg-white {
   background: white;
 }
 .bg-brown {
   background-color: brown !important;
-  height: 100vh;
+  height: 2000px;
 }
 .bg-dark {
   background: hsl(357, 100%, 86%);

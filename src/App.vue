@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="bg-l-grey">
     <!-- Desktop design -->
     <div
       class="p-d-flex p-flex-column p-ai-end desktop-container"
@@ -21,7 +21,7 @@
             class="p-mx-auto p-mb-auto p-mt-3 p-py-2 bg-lightgrey p-text-center rounded-1"
           >
             <i class="fa-solid fa-plus counter-sign"></i>
-            <h4 class="p-my-3">{{ comment.score }}</h4>
+            <h4 class="p-my-3 color-m-blue">{{ comment.score }}</h4>
             <i class="fa-solid fa-minus counter-sign"></i>
           </div>
           <Card style="width: 90%">
@@ -101,7 +101,7 @@
               class="p-mb-auto p-mx-auto p-mt-5 p-py-2 bg-lightgrey p-text-center rounded-1"
             >
               <i class="fa-solid fa-plus counter-sign"></i>
-              <h4 class="p-my-3">{{ reply.score }}</h4>
+              <h4 class="p-my-3 color-m-blue">{{ reply.score }}</h4>
               <i class="fa-solid fa-minus counter-sign"></i>
             </div>
             <Card class="p-mt-3" style="width: 90%">
@@ -228,21 +228,250 @@
       </div>
     </div>
     <!-- Mobile design -->
-    <div class="container" v-else>
+    <div style="height: 2000px" class="container position-relative" v-else>
       <div
-        style="background: white; width: 90%"
         v-for="(comment, index) in data.comments"
         :key="index"
-        class="p-mb-3 p-mx-auto"
+        class="p-mb-3 p-mx-auto p-mt-3"
+        style="width: 92%"
       >
-        <Card>
-          <template #header>
-            <div class="p-d-flex">
-              <img style="width: 15%" :src="comment.user.image.png" alt="" />
-              <h5 class="p-my-0">{{ comment.user.username }}</h5>
-            </div>
-          </template>
-        </Card>
+        <div
+          style="background: white; width: 100%"
+          class="p-pl-2 p-pt-3 rounded-1"
+        >
+          <Card>
+            <template #header>
+              <div class="p-d-flex">
+                <img
+                  style="width: 12%"
+                  :src="comment.user.image.png"
+                  class="p-ml-1"
+                />
+                <h5 class="p-my-0 p-as-center p-mx-3">
+                  {{ comment.user.username }}
+                </h5>
+                <p class="p-my-0 p-as-center">{{ comment.createdAt }}</p>
+              </div>
+            </template>
+            <template #content>
+              <Textarea
+                :id="reply.id"
+                disabled
+                :value="comment.content"
+                class="remove-disabled-effects"
+                :autoResize="true"
+                rows="2"
+                style="width: 94%"
+              />
+              <div class="p-d-flex p-jc-between">
+                <div
+                  class="p-d-flex p-ml-3 p-as-center bg-lightgrey p-px-2 rounded-1 p-py-1"
+                  :class="comment.user.username == 'juliusomo' ? 'p-mb-3' : '0'"
+                >
+                  <i class="fa-solid fa-plus counter-sign p-mt-2"></i>
+                  <h4 class="color-m-blue p-my-0 p-mx-2">
+                    {{ comment.score }}
+                  </h4>
+                  <i class="fa-solid fa-minus counter-sign p-mt-2"></i>
+                </div>
+                <!-- Delete and edit comment if user is juliusomo -->
+                <div
+                  v-if="comment.user.username == 'juliusomo'"
+                  class="p-ml-auto p-mr-4 p-d-flex p-ai-center p-mb-3"
+                >
+                  <div
+                    @click="deleteReply(comment.id)"
+                    class="p-mr-3 red-and-cursor"
+                  >
+                    <i class="fa-solid fa-trash p-mr-2"></i>
+                    <span>Delete</span>
+                  </div>
+
+                  <div @click="editReply(comment.id)">
+                    <i class="fa-solid fa-pen p-mr-2 color-m-blue"></i>
+                    <span>Edit</span>
+                  </div>
+                </div>
+                <!-- else other users -->
+
+                <!--  -->
+                <div v-else @click="showReply(comment.id)">
+                  <h4 class="p-ml-auto p-mr-4 color-m-blue">
+                    <i class="fa-solid fa-reply"></i>
+                    Reply
+                  </h4>
+                </div>
+              </div>
+            </template>
+          </Card>
+        </div>
+        <!-- If user wants to reply -->
+        <div
+          class="p-d-flex p-py-3 p-px-2 rounded-1 p-mt-3"
+          v-if="comment.isReplying"
+          style="background: white"
+        >
+          <div>
+            <img
+              style="width: 70%; min-width: 30px"
+              :src="getUser.image.png"
+              alt=""
+            />
+          </div>
+          <Textarea
+            v-model="replyText"
+            class="p-mr-3"
+            :autoResize="true"
+            rows="3"
+            placeholder="Add a comment..."
+            style="width: 80%"
+          />
+          <div class="p-mx-auto">
+            <Button
+              class="p-px-3 rounded-1 m-blue"
+              label="REPLY"
+              @click="reply(comment.id)"
+            />
+          </div>
+        </div>
+        <!-- v-if="comment.replies.length > 0" -->
+        <!-- If replies to comments -->
+        <div
+          style="background: white; width: 90%"
+          class="p-ml-auto p-mt-3 rounded-1 p-pl-2 p-pt-2"
+          v-for="(reply, index) in comment.replies"
+          :key="index"
+        >
+          <Card>
+            <template #header>
+              <div class="p-d-flex">
+                <img
+                  style="width: 12%"
+                  :src="reply.user.image.png"
+                  class="p-ml-1"
+                />
+                <h5 class="p-my-0 p-as-center p-mx-3">
+                  {{ reply.user.username }}
+                </h5>
+                <p class="p-my-0 p-as-center">{{ reply.createdAt }}</p>
+              </div>
+            </template>
+            <template #content>
+              <Textarea
+                :id="reply.id"
+                disabled
+                :value="'@' + reply.replyingTo + ' ' + reply.content"
+                class="remove-disabled-effects p-my-2"
+                :autoResize="true"
+                rows="2"
+                style="width: 94%"
+              />
+              <div
+                class="p-d-flex p-jc-between"
+                :class="reply.user.username == 'juliusomo' ? 'p-pb-3' : '0'"
+              >
+                <div
+                  class="p-d-flex p-ml-3 p-as-center bg-lightgrey p-px-2 rounded-1 p-py-1"
+                >
+                  <i class="fa-solid fa-plus counter-sign p-mt-2"></i>
+                  <h4 class="color-m-blue p-my-0 p-mx-2">
+                    {{ reply.score }}
+                  </h4>
+                  <i class="fa-solid fa-minus counter-sign p-mt-2"></i>
+                </div>
+                <div
+                  v-if="reply.user.username === 'juliusomo'"
+                  @click="showReply(reply.id)"
+                >
+                  <div class="p-d-flex p-mr-3">
+                    <div
+                      @click="mobileModal = true"
+                      class="p-mr-3 red-and-cursor"
+                    >
+                      <i class="fa-solid fa-trash p-mr-2"></i>
+                      <span>Delete</span>
+                    </div>
+
+                    <div @click="editReply(comment.id, reply.id)">
+                      <i class="fa-solid fa-pen p-mr-2 color-m-blue"></i>
+                      <span>Edit</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else @click="showReply(reply.id)">
+                  <h4 class="p-ml-auto p-mr-4 color-m-blue">
+                    <i class="fa-solid fa-reply"></i>
+                    Reply
+                  </h4>
+                </div>
+              </div>
+              <div class="p-d-flex p-jc-end p-pb-2">
+                <Button
+                  v-if="reply.isEditing"
+                  label="UPDATE"
+                  class="rounded-1 m-blue p-mr-3"
+                  @click="updateReply(comment.id, reply.id)"
+                />
+              </div>
+            </template>
+          </Card>
+          <Dialog
+            class="mobile-dialog"
+            :visible.sync="mobileModal"
+            position="center"
+            modal="true"
+          >
+            <template #header>
+              <h3 class="p-my-0">Delete comment</h3>
+            </template>
+            <p class="">
+              Are you sure you want to delete this comment? This will remove the
+              comment and can't be undone.
+            </p>
+            <template #footer>
+              <Button
+                label="NO, CANCEL"
+                class="rounded-1"
+                style="background: hsl(211, 10%, 45%)"
+                @click="mobileModal = false"
+              />
+              <Button
+                style="background: hsl(358, 79%, 66%)"
+                label="YES, DELETE"
+                @click="deleteReply(comment.id, reply.id)"
+                class="rounded-1 p-mr-5"
+              />
+            </template>
+          </Dialog>
+        </div>
+      </div>
+      <div
+        style="width: 92%; background-color: white"
+        class="p-mx-auto p-d-flex p-py-3 p-px-2 rounded-1 p-mt-4"
+      >
+        <div>
+          <img
+            style="width: 70%; min-width: 30px"
+            :src="getUser.image.png"
+            alt=""
+          />
+        </div>
+        <Textarea
+          v-model="commentText"
+          class="p-mx-auto"
+          :autoResize="true"
+          rows="3"
+          cols="64"
+          placeholder="Add a comment..."
+        />
+        <div class="p-mx-auto">
+          <Button
+            class="p-px-4 rounded-1 m-blue"
+            label="SEND"
+            @click="addComment()"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -262,6 +491,7 @@ export default {
       editedText: "",
       comments: data.comments,
       data: data,
+      mobileModal: false,
     };
   },
   computed: {
@@ -382,6 +612,7 @@ export default {
           return comment.id !== commentId;
         });
       }
+      this.mobileModal = false;
 
       this.$forceUpdate();
     },
@@ -399,6 +630,31 @@ export default {
 </script>
 
 <style>
+.position-relative {
+  position: relative;
+}
+.font-bold {
+  font-weight: bold;
+}
+.mobile-dialog {
+  width: 100%;
+  margin-bottom: 50%;
+  padding: 0 0.7rem;
+  box-shadow: none;
+}
+.p-dialog-header {
+  padding: 0 !important;
+  padding-top: 1rem !important;
+  padding-left: 2rem !important;
+  position: center;
+}
+.p-dialog-content {
+  padding: 0 2rem !important;
+  padding-right: 3rem !important;
+}
+.p-dialog-header-close-icon {
+  visibility: hidden;
+}
 .p-card-body {
   padding: 0 !important;
 }
@@ -440,6 +696,9 @@ export default {
 }
 .color-m-blue {
   color: hsl(238, 40%, 52%) !important;
+}
+.bg-l-grey {
+  background: hsl(238, 40%, 52%);
 }
 .color-m-blue:hover {
   opacity: 0.4 !important;

@@ -8,6 +8,8 @@ import Card from "primevue/card";
 Vue.component("Card", Card);
 import Textarea from "primevue/textarea";
 Vue.component("Textarea", Textarea);
+import Dialog from "primevue/dialog";
+Vue.component("Dialog", Dialog);
 //Prime Styles
 import "primeflex/primeflex.css";
 import "primevue/resources/themes/saga-blue/theme.css";

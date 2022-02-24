@@ -33,6 +33,7 @@
                   :src="comment.user.image.png"
                 />
                 <h4 class="p-mx-3">{{ comment.user.username }}</h4>
+
                 <p class="p-as-center">{{ comment.createdAt }}</p>
 
                 <!-- Delete and edit comment if user is juliusomo -->
@@ -41,7 +42,7 @@
                   class="p-ml-auto p-mr-4 p-d-flex p-ai-center"
                 >
                   <div
-                    @click="deleteReply(comment.id)"
+                    @click="defineDeleteId(comment.id)"
                     class="p-mr-3 red-and-cursor"
                   >
                     <i class="fa-solid fa-trash p-mr-2"></i>
@@ -124,7 +125,7 @@
                     class="p-ml-auto p-mr-2 p-d-flex p-ai-center"
                   >
                     <div
-                      @click="deleteReply(comment.id, reply.id)"
+                      @click="defineDeleteId(comment.id, reply.id)"
                       class="p-mr-3 red-and-cursor"
                     >
                       <i class="fa-solid fa-trash p-mr-2"></i>
@@ -226,6 +227,34 @@
           />
         </div>
       </div>
+      <Dialog
+        class="desktop-dialog"
+        :visible.sync="mobileModal"
+        position="center"
+        modal
+      >
+        <template #header>
+          <h3 class="p-my-0">Delete comment</h3>
+        </template>
+        <p class="">
+          Are you sure you want to delete this comment? This will remove the
+          comment and can't be undone.
+        </p>
+        <template #footer>
+          <Button
+            label="NO, CANCEL"
+            class="rounded-1"
+            style="background: hsl(211, 10%, 45%)"
+            @click="mobileModal = false"
+          />
+          <Button
+            style="background: hsl(358, 79%, 66%)"
+            label="YES, DELETE"
+            @click="deleteReply()"
+            class="rounded-1 p-mr-5"
+          />
+        </template>
+      </Dialog>
     </div>
     <!-- Mobile design -->
     <div style="height: 2000px" class="container position-relative" v-else>
@@ -279,9 +308,10 @@
                   v-if="comment.user.username == 'juliusomo'"
                   class="p-ml-auto p-mr-4 p-d-flex p-ai-center p-mb-3"
                 >
+                  <!-- @click="deleteReply(comment.id)" -->
                   <div
-                    @click="deleteReply(comment.id)"
                     class="p-mr-3 red-and-cursor"
+                    @click="defineDeleteId(comment.id)"
                   >
                     <i class="fa-solid fa-trash p-mr-2"></i>
                     <span>Delete</span>
@@ -385,7 +415,7 @@
                 >
                   <div class="p-d-flex p-mr-3">
                     <div
-                      @click="mobileModal = true"
+                      @click="defineDeleteId(comment.id, reply.id)"
                       class="p-mr-3 red-and-cursor"
                     >
                       <i class="fa-solid fa-trash p-mr-2"></i>
@@ -420,7 +450,7 @@
             class="mobile-dialog"
             :visible.sync="mobileModal"
             position="center"
-            modal="true"
+            modal
           >
             <template #header>
               <h3 class="p-my-0">Delete comment</h3>
@@ -439,7 +469,7 @@
               <Button
                 style="background: hsl(358, 79%, 66%)"
                 label="YES, DELETE"
-                @click="deleteReply(comment.id, reply.id)"
+                @click="deleteReply()"
                 class="rounded-1 p-mr-5"
               />
             </template>
@@ -492,6 +522,8 @@ export default {
       comments: data.comments,
       data: data,
       mobileModal: false,
+      deletingReplyId: null,
+      deletingCommentId: null,
     };
   },
   computed: {
@@ -576,7 +608,7 @@ export default {
             replyingTo: comment.user.username,
             id: uuidv4(),
             content: this.replyText,
-            createdAt: new Date(),
+            createdAt: Date.now(),
             score: 0,
             user: {
               image: { png: "https://i.ibb.co/S6TT3JY/image-juliusomo.png" },
@@ -598,18 +630,26 @@ export default {
       });
       this.$forceUpdate();
     },
-    deleteReply(commentId, replyId) {
-      if (replyId) {
+    // get id of comment or both comment and reply for the use of deleteReply method.
+    // these methods work together
+    defineDeleteId(commentId, replyId) {
+      this.mobileModal = true;
+      this.deletingCommentId = commentId;
+      this.deletingReplyId = replyId;
+    },
+    deleteReply() {
+      console.log(this.deletingCommentId, this.deletingReplyId);
+      if (this.deletingReplyId) {
         data.comments.forEach((comment) => {
-          if (comment.id == commentId) {
+          if (comment.id == this.deletingCommentId) {
             comment.replies = comment.replies.filter((reply) => {
-              return reply.id != replyId;
+              return reply.id != this.deletingReplyId;
             });
           }
         });
       } else {
         data.comments = data.comments.filter((comment) => {
-          return comment.id !== commentId;
+          return comment.id !== this.deletingCommentId;
         });
       }
       this.mobileModal = false;
@@ -630,6 +670,10 @@ export default {
 </script>
 
 <style>
+.desktop-dialog {
+  padding: 0 25%;
+  box-shadow: none;
+}
 .position-relative {
   position: relative;
 }

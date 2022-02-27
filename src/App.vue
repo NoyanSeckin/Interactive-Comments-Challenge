@@ -34,7 +34,13 @@
                 />
                 <h4 class="p-mx-3">{{ comment.user.username }}</h4>
 
-                <p class="p-as-center">{{ comment.createdAt }}</p>
+                <p class="p-as-center">
+                  {{
+                    comment.user.username == "juliusomo"
+                      ? calculateTimePassed(comment.createdAt)
+                      : comment.createdAt
+                  }}
+                </p>
 
                 <!-- Delete and edit comment if user is juliusomo -->
                 <div
@@ -312,7 +318,13 @@
                 <h5 class="p-my-0 p-as-center p-mx-3">
                   {{ comment.user.username }}
                 </h5>
-                <p class="p-my-0 p-as-center">{{ comment.createdAt }}</p>
+                <p class="p-my-0 p-as-center">
+                  {{
+                    comment.user.username == "juliusomo"
+                      ? calculateTimePassed(comment.createdAt)
+                      : comment.createdAt
+                  }}
+                </p>
               </div>
             </template>
             <template #content>

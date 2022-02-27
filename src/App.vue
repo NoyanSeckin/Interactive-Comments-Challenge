@@ -65,7 +65,7 @@
                 </h4>
               </div>
             </template>
-            <template #content class="repyl-content">
+            <template #content class="reply-content">
               <Textarea
                 :id="comment.id"
                 disabled
@@ -118,7 +118,13 @@
                   <p v-if="reply.user.username == 'juliusomo'" class="you-tag">
                     you
                   </p>
-                  <p class="p-ml-1">{{ reply.createdAt }}</p>
+                  <p class="p-ml-1">
+                    {{
+                      reply.user.username == "juliusomo"
+                        ? calculateTimePassed(reply.createdAt)
+                        : reply.createdAt
+                    }}
+                  </p>
                   <!-- Delete and edit instead of reply if user is juliusomo -->
                   <div
                     v-if="reply.user.username == 'juliusomo'"
@@ -144,20 +150,33 @@
                   </h4>
                 </div>
               </template>
-
-              <template #content class="reply-content">
+              <template v-if="reply.user.username === 'juliusomo'" #content>
+                <div v-show="!reply.isEditing">
+                  <p ref="REPLY" :id="reply.id" class="p-px-2">
+                    <span class="color-m-blue"> @{{ reply.replyingTo }} </span>
+                    {{ reply.content }}
+                  </p>
+                </div>
                 <Textarea
-                  :id="reply.id"
-                  disabled
-                  :value="
-                    reply.editedReply || '@' + reply.replyingTo + reply.content
-                  "
-                  class="p-mr-5 p-ml-2 remove-disabled-effects"
+                  v-show="reply.isEditing"
+                  class="remove-disabled-effects p-my-2"
                   :autoResize="true"
                   rows="2"
-                  style="width: 100%"
+                  style="width: 99%"
+                  autofocus
+                  :value="reply.editedText"
+                  :id="reply.id + 'textArea'"
                 />
-                <div class="p-d-flex p-mb-3 p-mt-2">
+                <div
+                  class="p-d-flex p-jc-between"
+                  :class="reply.user.username == 'juliusomo' ? 'p-pb-3' : '0'"
+                >
+                  <div
+                    v-if="reply.user.username === 'juliusomo'"
+                    @click="showReply(reply.id)"
+                  ></div>
+                </div>
+                <div class="p-d-flex p-mb-3">
                   <Button
                     v-if="reply.isEditing"
                     label="UPDATE"
@@ -165,6 +184,19 @@
                     @click="updateReply(comment.id, reply.id)"
                   />
                 </div>
+              </template>
+              <template v-else #content>
+                <Textarea
+                  :id="reply.id"
+                  disabled
+                  :value="
+                    reply.editedReply || '@' + reply.replyingTo + reply.content
+                  "
+                  class="p-mr-5 p-ml-2 p-mb-3 remove-disabled-effects"
+                  :autoResize="true"
+                  rows="2"
+                  style="width: 100%"
+                />
               </template>
             </Card>
           </div>
@@ -189,6 +221,7 @@
             rows="3"
             cols="64"
             placeholder="Add a comment..."
+            :id="comment.id + 'textArea'"
           />
           <div class="p-mx-auto">
             <Button
@@ -229,7 +262,7 @@
       </div>
       <Dialog
         class="desktop-dialog"
-        :visible.sync="mobileModal"
+        :visible.sync="modalWindow"
         position="center"
         modal
       >
@@ -245,7 +278,7 @@
             label="NO, CANCEL"
             class="rounded-1"
             style="background: hsl(211, 10%, 45%)"
-            @click="mobileModal = false"
+            @click="modalWindow = false"
           />
           <Button
             style="background: hsl(358, 79%, 66%)"
@@ -323,8 +356,6 @@
                   </div>
                 </div>
                 <!-- else other users -->
-
-                <!--  -->
                 <div v-else @click="showReply(comment.id)">
                   <h4 class="p-ml-auto p-mr-4 color-m-blue">
                     <i class="fa-solid fa-reply"></i>
@@ -335,7 +366,7 @@
             </template>
           </Card>
         </div>
-        <!-- If user wants to reply -->
+        <!-- User reply card if user clicks reply button-->
         <div
           class="p-d-flex p-py-3 p-px-2 rounded-1 p-mt-3"
           v-if="comment.isReplying"
@@ -364,8 +395,7 @@
             />
           </div>
         </div>
-        <!-- v-if="comment.replies.length > 0" -->
-        <!-- If replies to comments -->
+        <!-- If there are replies to comments -->
         <div
           style="background: white; width: 90%"
           class="p-ml-auto p-mt-3 rounded-1 p-pl-2 p-pt-2"
@@ -383,18 +413,31 @@
                 <h5 class="p-my-0 p-as-center p-mx-3">
                   {{ reply.user.username }}
                 </h5>
-                <p class="p-my-0 p-as-center">{{ reply.createdAt }}</p>
+                <p class="p-my-0 p-as-center">
+                  {{
+                    reply.user.username == "juliusomo"
+                      ? calculateTimePassed(reply.createdAt)
+                      : reply.createdAt
+                  }}
+                </p>
               </div>
             </template>
-            <template #content>
+            <!-- if user is juliusomo and wants to do editing, text display div turns to textarea -->
+            <template v-if="reply.user.username === 'juliusomo'" #content>
+              <div v-show="!reply.isEditing">
+                <p ref="REPLY" :id="reply.id" class="p-px-2">
+                  <span class="color-m-blue"> @{{ reply.replyingTo }} </span>
+                  {{ reply.content }}
+                </p>
+              </div>
               <Textarea
-                :id="reply.id"
-                disabled
-                :value="'@' + reply.replyingTo + ' ' + reply.content"
+                v-show="reply.isEditing"
                 class="remove-disabled-effects p-my-2"
                 :autoResize="true"
                 rows="2"
-                style="width: 94%"
+                style="width: 99%"
+                :value="reply.editedText"
+                :id="reply.id + 'textArea'"
               />
               <div
                 class="p-d-flex p-jc-between"
@@ -445,10 +488,38 @@
                 />
               </div>
             </template>
+            <template v-else #content>
+              <div style="width: 94%">
+                <div>
+                  <!-- content text -->
+                  <p class="p-pl-2">
+                    <span class="color-m-blue"> @{{ reply.replyingTo }} </span>
+                    {{ reply.content }}
+                  </p>
+                  <div class="p-d-flex p-jc-between">
+                    <div
+                      class="p-d-flex p-ml-3 p-as-center bg-lightgrey p-px-2 rounded-1 p-py-1"
+                    >
+                      <i class="fa-solid fa-plus counter-sign p-mt-2"></i>
+                      <h4 class="color-m-blue p-my-0 p-mx-2">
+                        {{ reply.score }}
+                      </h4>
+                      <i class="fa-solid fa-minus counter-sign p-mt-2"></i>
+                    </div>
+                    <div @click="showReply(reply.id)">
+                      <h4 class="p-mr-2 color-m-blue">
+                        <i class="fa-solid fa-reply"></i>
+                        Reply
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
           </Card>
           <Dialog
             class="mobile-dialog"
-            :visible.sync="mobileModal"
+            :visible.sync="modalWindow"
             position="center"
             modal
           >
@@ -464,7 +535,7 @@
                 label="NO, CANCEL"
                 class="rounded-1"
                 style="background: hsl(211, 10%, 45%)"
-                @click="mobileModal = false"
+                @click="modalWindow = false"
               />
               <Button
                 style="background: hsl(358, 79%, 66%)"
@@ -489,11 +560,11 @@
         </div>
         <Textarea
           v-model="commentText"
-          class="p-mx-auto"
+          class="p-mr-2"
           :autoResize="true"
           rows="3"
-          cols="64"
           placeholder="Add a comment..."
+          style="width: 100%"
         />
         <div class="p-mx-auto">
           <Button
@@ -507,11 +578,31 @@
   </div>
 </template>
 <script>
-import data from "./components/data.json";
+import data from "../public/data.json";
 import { v4 as uuidv4 } from "uuid";
 export default {
   name: "App",
   components: {},
+  // problematic directive
+  directives: {
+    blueReplyingTo: {
+      inserted: function (el, binding) {
+        // @ten sonra gelen ve boslukla biten kelimeler
+        console.log(el.innerHTML);
+        let innerValue = el.value;
+        let splitWords = el.value.split(" ");
+        splitWords.forEach((word) => {
+          if (word.includes("@")) {
+            innerValue = innerValue.replace(
+              word,
+              `<span class="color-m-blue"> ${word} </span>`
+            );
+          }
+        });
+        el.innerHTML = innerValue;
+      },
+    },
+  },
   data() {
     return {
       windowWidth: window.innerWidth,
@@ -521,7 +612,7 @@ export default {
       editedText: "",
       comments: data.comments,
       data: data,
-      mobileModal: false,
+      modalWindow: false,
       deletingReplyId: null,
       deletingCommentId: null,
     };
@@ -532,6 +623,30 @@ export default {
     },
   },
   methods: {
+    calculateTimePassed(createdAt) {
+      const now = Date.now();
+      // switch (createdAt) {
+      //   case createdAt < now + 6000:
+      //     return "Just now";
+      //   case createdAt > now + 6000:
+      //     return "1 minute ago";
+      //   case createdAt < now + 6000:
+      //     return "Just now";
+
+      //   default:
+      //     break;
+      // }
+      if (createdAt < now + 6000) {
+        return "Just now";
+      } else if (createdAt > now + 6000) {
+        return "1 minute ago";
+      } else if (createdAt > now + 3600000) {
+        return "1 hour ago";
+      } else if (createdAt > now + 7200000) {
+        return "long ago";
+      }
+    },
+
     addComment() {
       if (this.commentText) {
         data.comments.push({
@@ -552,18 +667,20 @@ export default {
         this.$forceUpdate();
       }
     },
-    editReply(commentId, replyId, type) {
-      // this.isEditing = true;
-
+    editReply(commentId, replyId) {
       data.comments.forEach((comment) => {
         if (comment.id == commentId) {
           if (replyId) {
             comment.replies.forEach((reply) => {
               if (reply.id === replyId) {
-                const textArea = document.getElementById(replyId);
-                textArea.removeAttribute("disabled");
-                textArea.focus();
                 reply.isEditing = true;
+                const contentArea = document.getElementById(replyId);
+                reply.editedText = contentArea.innerText;
+                setTimeout(
+                  () => document.getElementById(replyId + "textArea").focus(),
+                  0
+                );
+                // console.log(textArea);
               }
             });
           } else {
@@ -583,12 +700,19 @@ export default {
           if (replyId) {
             comment.replies.forEach((reply) => {
               if (reply.id == replyId) {
-                const textArea = document.getElementById(replyId);
-                // create new property in reply object and store new reply
-                reply.editedReply = textArea.value;
-                // disable editing
-                textArea.setAttribute("disabled", "");
                 reply.isEditing = false;
+                const contentArea = document.getElementById(replyId);
+                const textArea = document.getElementById(replyId + "textArea");
+                contentArea.innerText = textArea.value;
+                let splitWords = contentArea.innerText.split(" ");
+                splitWords.forEach((word) => {
+                  if (word.includes("@")) {
+                    contentArea.innerHTML = contentArea.innerHTML.replace(
+                      word,
+                      `<span class="color-m-blue"> ${word} </span>`
+                    );
+                  }
+                });
               }
             });
           } else {
@@ -628,12 +752,11 @@ export default {
           comment.isReplying = !comment.isReplying;
         }
       });
-      this.$forceUpdate();
     },
     // get id of comment or both comment and reply for the use of deleteReply method.
     // these methods work together
     defineDeleteId(commentId, replyId) {
-      this.mobileModal = true;
+      this.modalWindow = true;
       this.deletingCommentId = commentId;
       this.deletingReplyId = replyId;
     },
@@ -652,7 +775,7 @@ export default {
           return comment.id !== this.deletingCommentId;
         });
       }
-      this.mobileModal = false;
+      this.modalWindow = false;
 
       this.$forceUpdate();
     },
@@ -742,7 +865,7 @@ export default {
   color: hsl(238, 40%, 52%) !important;
 }
 .bg-l-grey {
-  background: hsl(238, 40%, 52%);
+  background: hsl(223, 19%, 93%);
 }
 .color-m-blue:hover {
   opacity: 0.4 !important;
